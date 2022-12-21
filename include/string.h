@@ -1,11 +1,13 @@
 #ifndef	_STRING_H
 #define	_STRING_H
 
+#define __STDC_VERSION_STRING_H__ 202311L
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include <features.h>
+#include <sys/musl-defs.h>
 
 #if __cplusplus >= 201103L
 #define NULL nullptr
@@ -28,7 +30,7 @@ void *memcpy (void *__restrict, const void *__restrict, size_t);
 void *memmove (void *, const void *, size_t);
 void *memset (void *, int, size_t);
 int memcmp (const void *, const void *, size_t);
-void *memchr (const void *, int, size_t);
+void *(memchr) (const void *, int, size_t);
 
 char *strcpy (char *__restrict, const char *__restrict);
 char *strncpy (char *__restrict, const char *__restrict, size_t);
@@ -42,18 +44,49 @@ int strncmp (const char *, const char *, size_t);
 int strcoll (const char *, const char *);
 size_t strxfrm (char *__restrict, const char *__restrict, size_t);
 
-char *strchr (const char *, int);
-char *strrchr (const char *, int);
+char *(strchr) (const char *, int);
+char *(strrchr) (const char *, int);
 
 size_t strcspn (const char *, const char *);
 size_t strspn (const char *, const char *);
-char *strpbrk (const char *, const char *);
-char *strstr (const char *, const char *);
+char *(strpbrk) (const char *, const char *);
+char *(strstr) (const char *, const char *);
 char *strtok (char *__restrict, const char *__restrict);
 
 size_t strlen (const char *);
 
 char *strerror (int);
+
+void *memset_explicit(void *, int, size_t);
+
+#if __STDC_VERSION__ >= 202311L
+
+#define memchr(S, C, N) \
+    _Generic(__cvvp(S), \
+             const void *: (const void *) memchr(S, C, N), \
+             default:      memchr(S, C, N))
+
+#define strchr(S, C) \
+    _Generic(__cvvp(S), \
+             const void *: (const void *) strchr(S, C), \
+             default:      strchr(S, C))
+
+#define strrchr(S, C) \
+    _Generic(__cvvp(S), \
+             const void *: (const void *) strrchr(S, C), \
+             default:      strrchr(S, C))
+
+#define strpbrk(S, A) \
+    _Generic(__cvvp(S), \
+             const void *: (const void *) strpbrk(S, A), \
+             default:      strpbrk(S, A))
+
+#define strstr(S, N) \
+    _Generic(__cvvp(S), \
+             const void *: (const void *) strstr(S, N), \
+             default:      strstr(S, N))
+
+#endif
 
 #if defined(_BSD_SOURCE) || defined(_GNU_SOURCE)
 #include <strings.h>
@@ -67,18 +100,15 @@ int strerror_r (int, char *, size_t);
 char *stpcpy(char *__restrict, const char *__restrict);
 char *stpncpy(char *__restrict, const char *__restrict, size_t);
 size_t strnlen (const char *, size_t);
-char *strdup (const char *);
-char *strndup (const char *, size_t);
 char *strsignal(int);
 char *strerror_l (int, locale_t);
 int strcoll_l (const char *, const char *, locale_t);
 size_t strxfrm_l (char *__restrict, const char *__restrict, size_t, locale_t);
 #endif
 
-#if defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) \
- || defined(_BSD_SOURCE)
+char *strdup (const char *);
+char *strndup (const char *, size_t);
 void *memccpy (void *__restrict, const void *__restrict, int, size_t);
-#endif
 
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
 char *strsep(char **, const char *);
