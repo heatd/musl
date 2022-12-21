@@ -8,6 +8,11 @@
 #define _IOR(a,b,c) _IOC(_IOC_READ,(a),(b),sizeof(c))
 #define _IOWR(a,b,c) _IOC(_IOC_READ|_IOC_WRITE,(a),(b),sizeof(c))
 
+#define TIOONYXCTL 0x5461
+
+#define TIO_ONYX_GET_OWNERSHIP_OF_TTY		(1 << 0)
+#define TIO_ONYX_RELEASE_OWNERSHIP_OF_TTY	(1 << 1)
+
 #define TCGETS		0x5401
 #define TCSETS		0x5402
 #define TCSETSW		0x5403
@@ -111,5 +116,30 @@
 #define SIOCGSTAMP      0x8906
 #define SIOCGSTAMPNS    0x8907
 #endif
+
+#include <netinet/in.h>
+struct if_config_inet
+{ 
+	struct in_addr address; 
+	struct in_addr router; 
+	struct in_addr subnet; 
+};
+struct if_inet6_addr
+{ 
+	struct in6_addr address; 
+	uint16_t flags;
+	uint8_t prefix_len;
+};
+
+#define INET6_ADDR_LOCAL       (1 << 0)
+#define INET6_ADDR_GLOBAL      (1 << 1)
+
+#define SIOSETINET4             0x9000
+#define SIOADDINET6ADDR	        0x9001
+#define SIOGETINET4	            0x9002
+#define SIOGETINET6	            0x9003
+#define SIOGETMAC	            0x9004
+#define SIOGETIFNAME	        0x9005
+#define SIOGETINDEX	            0x9006
 
 #include <bits/ioctl_fix.h>

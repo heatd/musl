@@ -6,6 +6,7 @@
 #include <sys/mman.h>
 #include <string.h>
 #include <stddef.h>
+#include <sched.h>
 
 static void dummy_0()
 {
@@ -130,7 +131,7 @@ _Noreturn void __pthread_exit(void *result)
 	__dl_thread_cleanup();
 
 	/* Last, unlink thread from the list. This change will not be visible
-	 * until the lock is released, which only happens after SYS_exit
+	 * until the lock is released, which only happens after SYS_exit_thread
 	 * has been called, via the exit futex address pointing at the lock.
 	 * This needs to happen after any possible calls to LOCK() that might
 	 * skip locking if process appears single-threaded. */
@@ -165,7 +166,7 @@ _Noreturn void __pthread_exit(void *result)
 	self->tid = 0;
 	UNLOCK(self->killlock);
 
-	for (;;) __syscall(SYS_exit, 0);
+	for (;;) __syscall(SYS_exit_thread, 0);
 }
 
 void __do_cleanup_push(struct __ptcb *cb)
@@ -196,7 +197,7 @@ static int start(void *p)
 			__wait(&args->control, 0, 2, 1);
 		if (args->control) {
 			__syscall(SYS_set_tid_address, &args->control);
-			for (;;) __syscall(SYS_exit, 0);
+			for (;;) __syscall(SYS_exit_thread, 0);
 		}
 	}
 	__syscall(SYS_rt_sigprocmask, SIG_SETMASK, &args->sig_mask, 0, _NSIG/8);
@@ -230,15 +231,22 @@ static void init_file_lock(FILE *f)
 	if (f && f->lock<0) f->lock = 0;
 }
 
+struct tid_out
+{
+	/* TID is placed here */
+	pid_t *ptid;
+	/* This location is zero'd when the thread exits */
+	pid_t *ctid;
+};
+
 int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict attrp, void *(*entry)(void *), void *restrict arg)
 {
 	int ret, c11 = (attrp == __ATTRP_C11_THREAD);
 	size_t size, guard;
 	struct pthread *self, *new;
 	unsigned char *map = 0, *stack = 0, *tsd = 0, *stack_limit;
-	unsigned flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND
-		| CLONE_THREAD | CLONE_SYSVSEM | CLONE_SETTLS
-		| CLONE_PARENT_SETTID | CLONE_CHILD_CLEARTID | CLONE_DETACHED;
+	unsigned flags = CLONE_SPAWNTHREAD;
+
 	pthread_attr_t attr = { 0 };
 	sigset_t set;
 
@@ -330,6 +338,9 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 	stack -= (uintptr_t)stack % sizeof(uintptr_t);
 	stack -= sizeof(struct start_args);
 	struct start_args *args = (void *)stack;
+
+	stack -= (uintptr_t)stack % 16;
+	stack -= sizeof(uintptr_t);
 	args->start_func = entry;
 	args->start_arg = arg;
 	args->control = attr._a_sched ? 1 : 0;
@@ -348,7 +359,11 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 
 	__tl_lock();
 	if (!libc.threads_minus_1++) libc.need_locks = 1;
-	ret = __clone((c11 ? start_c11 : start), stack, flags, args, &new->tid, TP_ADJ(new), &__thread_list_lock);
+	struct tid_out t;
+	t.ptid = &new->tid;
+	t.ctid = (pid_t *) &__thread_list_lock;
+	ret = syscall(SYS_clone, (c11 ? start_c11 : start), stack, flags, args, &t,
+                  TP_ADJ(new));
 
 	/* All clone failures translate to EAGAIN. If explicit scheduling
 	 * was requested, attempt it before unlocking the thread list so

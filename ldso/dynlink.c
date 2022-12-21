@@ -1578,6 +1578,12 @@ static void update_tls_size()
 	tls_align);
 }
 
+void _dl_get_tls_static_info(size_t *size, size_t *align)
+{
+	*size = libc.tls_size;
+	*align = libc.tls_align;
+}
+
 static void install_new_tls(void)
 {
 	sigset_t set;
@@ -1907,7 +1913,7 @@ void __dls3(size_t *sp, size_t *auxv)
 				vdso.base = (void *)(vdso_base - phdr->p_vaddr + phdr->p_offset);
 		}
 		vdso.name = "";
-		vdso.shortname = "linux-gate.so.1";
+		vdso.shortname = "onyx-vdso.so.0";
 		vdso.relocated = 1;
 		vdso.deps = (struct dso **)no_deps;
 		decode_dyn(&vdso);

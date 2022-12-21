@@ -2,7 +2,7 @@
 .type vfork,@function
 vfork:
 	pop %rdx
-	mov $58,%eax
+	mov $150,%eax
 	syscall
 	push %rdx
 	mov %rax,%rdi
