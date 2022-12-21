@@ -35,6 +35,12 @@
 #define _Noreturn
 #endif
 
+#if __STDC_VERSION__ >= 202311L
+#define C23_DEPRECATED [[deprecated]]
+#else
+#define C23_DEPRECATED
+#endif
+
 #define __REDIR(x,y) __typeof__(x) x __asm__(#y)
 
 #endif
