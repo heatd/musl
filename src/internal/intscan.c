@@ -38,17 +38,19 @@ unsigned long long __intscan(FILE *f, unsigned base, int pok, unsigned long long
 		neg = -(c=='-');
 		c = shgetc(f);
 	}
-	if ((base == 0 || base == 16) && c=='0') {
-		c = shgetc(f);
-		if ((c|32)=='x') {
+	if ((base == 0 || base == 16 || base == 2) && c=='0') {
+		c = shgetc(f) | 32;
+		if (c == 'x' || c == 'b') {
+			/* Try to check if this is indeed a valid hex/binary number */
+			unsigned int possible_base = c == 'x' ? 16 : 2;
 			c = shgetc(f);
-			if (val[c]>=16) {
+			if (val[c]>=possible_base) {
 				shunget(f);
 				if (pok) shunget(f);
 				else shlim(f, 0);
 				return 0;
 			}
-			base = 16;
+			base = possible_base;
 		} else if (base == 0) {
 			base = 8;
 		}
