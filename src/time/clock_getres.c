@@ -1,7 +1,7 @@
 #include <time.h>
 #include "syscall.h"
 
-int clock_getres(clockid_t clk, struct timespec *ts)
+int __clock_getres(clockid_t clk, struct timespec *ts)
 {
 #ifdef SYS_clock_getres_time64
 	/* On a 32-bit arch, use the old syscall if it exists. */
@@ -19,3 +19,5 @@ int clock_getres(clockid_t clk, struct timespec *ts)
 	 * 32-bit arch and we can get result directly into timespec. */
 	return syscall(SYS_clock_getres, clk, ts);
 }
+
+weak_alias(__clock_getres, clock_getres);

@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#define __STDC_VERSION_TIME_H__ 202311L
+
 #include <features.h>
 
 #if __cplusplus >= 201103L
@@ -58,8 +60,8 @@ time_t mktime (struct tm *);
 size_t strftime (char *__restrict, size_t, const char *__restrict, const struct tm *__restrict);
 struct tm *gmtime (const time_t *);
 struct tm *localtime (const time_t *);
-char *asctime (const struct tm *);
-char *ctime (const time_t *);
+C23_DEPRECATED char *asctime (const struct tm *);
+C23_DEPRECATED char *ctime (const time_t *);
 int timespec_get(struct timespec *, int);
 
 #define CLOCKS_PER_SEC 1000000L
@@ -68,12 +70,19 @@ int timespec_get(struct timespec *, int);
 
 #if defined(_POSIX_SOURCE) || defined(_POSIX_C_SOURCE) \
  || defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) \
+ || defined(_BSD_SOURCE) || __STDC_VERSION__ >= 202311L
+
+struct tm *gmtime_r (const time_t *__restrict, struct tm *__restrict);
+struct tm *localtime_r (const time_t *__restrict, struct tm *__restrict);
+
+#endif
+
+#if defined(_POSIX_SOURCE) || defined(_POSIX_C_SOURCE) \
+ || defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) \
  || defined(_BSD_SOURCE)
 
 size_t strftime_l (char *  __restrict, size_t, const char *  __restrict, const struct tm *  __restrict, locale_t);
 
-struct tm *gmtime_r (const time_t *__restrict, struct tm *__restrict);
-struct tm *localtime_r (const time_t *__restrict, struct tm *__restrict);
 char *asctime_r (const struct tm *__restrict, char *__restrict);
 char *ctime_r (const time_t *, char *);
 
@@ -127,9 +136,28 @@ struct tm *getdate (const char *);
 #endif
 
 
+#if defined(_GNU_SOURCE) || defined(_BSD_SOURCE) || __STDC_VERSION__ >= 202311L
+time_t timegm(struct tm *);
+#endif
+
+#define TIME_MONOTONIC          (CLOCK_MONOTONIC + 1)
+#define TIME_ACTIVE             (CLOCK_PROCESS_CPUTIME_ID + 1)
+#define TIME_THREAD_ACTIVE      (CLOCK_THREAD_CPUTIME_ID + 1)
+#define TIME_MONOTONIC_RAW      (CLOCK_MONOTONIC_RAW + 1)
+#define TIME_REALTIME_COARSE    (CLOCK_REALTIME_COARSE + 1)
+#define TIME_MONOTONIC_COARSE   (CLOCK_MONOTONIC_COARSE + 1)
+#define TIME_BOOTTIME           (CLOCK_BOOTTIME + 1)
+#define TIME_REALTIME_ALARM     (CLOCK_REALTIME_ALARM + 1)
+#define TIME_BOOTTIME_ALARM     (CLOCK_BOOTTIME_ALARM + 1)
+#define TIME_SGI_CYCLE          (CLOCK_SGI_CYCLE + 1)
+#define TIME_TAI                (CLOCK_TAI + 1)
+
+#if __STDC_VERSION__ >= 202311L
+int timespec_getres(struct timespec *, int);
+#endif
+
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
 int stime(const time_t *);
-time_t timegm(struct tm *);
 #endif
 
 #if _REDIR_TIME64

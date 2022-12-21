@@ -1,10 +1,10 @@
 #include <time.h>
 
-/* There is no other implemented value than TIME_UTC; all other values
- * are considered erroneous. */
 int timespec_get(struct timespec * ts, int base)
 {
-	if (base != TIME_UTC) return 0;
-	int ret = __clock_gettime(CLOCK_REALTIME, ts);
+	clockid_t id = __c23_get_clock(base);
+    if (id < 0)
+        return 0;
+	int ret = __clock_gettime(id, ts);
 	return ret < 0 ? 0 : base;
 }
