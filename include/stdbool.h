@@ -1,7 +1,7 @@
 #ifndef _STDBOOL_H
 #define _STDBOOL_H
 
-#ifndef __cplusplus
+#if __STDC_VERSION__ < 202311L || !defined(__cplusplus)
 
 #define true 1
 #define false 0
