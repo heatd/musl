@@ -1,6 +1,8 @@
 #ifndef _STDLIB_H
 #define _STDLIB_H
 
+#define __STDC_VERSION_STDLIB_H__ 202311L
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -19,6 +21,11 @@ extern "C" {
 #define __NEED_wchar_t
 
 #include <bits/alltypes.h>
+#include <sys/musl-defs.h>
+
+#if __STDC_VERSION__ >= 202311L
+#include <bits/callonce.h>
+#endif
 
 int atoi (const char *);
 long atol (const char *);
@@ -54,7 +61,17 @@ char *getenv (const char *);
 
 int system (const char *);
 
-void *bsearch (const void *, const void *, size_t, size_t, int (*)(const void *, const void *));
+void *(bsearch) (const void *, const void *, size_t, size_t, int (*)(const void *, const void *));
+
+#if __STDC_VERSION__ >= 202311L
+
+#define bsearch(K, B, N, S, C) \
+    _Generic(__cvvp(B), \
+             const void *: (const void *) bsearch(K, B, N, S ,C), \
+             default:      bsearch(K, B, N, S, C))
+
+#endif
+
 void qsort (void *, size_t, size_t, int (*)(const void *, const void *));
 
 int abs (int);

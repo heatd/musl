@@ -3,6 +3,7 @@
 
 #include <features.h>
 #include <time.h>
+#include <bits/callonce.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -12,7 +13,6 @@ typedef struct __pthread *thrd_t;
 #define thread_local _Thread_local
 #endif
 
-typedef int once_flag;
 typedef unsigned tss_t;
 typedef int (*thrd_start_t)(void *);
 typedef void (*tss_dtor_t)(void *);
@@ -38,8 +38,6 @@ enum {
 	mtx_timed     = 2,
 };
 
-#define ONCE_FLAG_INIT 0
-
 int thrd_create(thrd_t *, thrd_start_t, void *);
 _Noreturn void thrd_exit(int);
 
@@ -54,8 +52,6 @@ int thrd_equal(thrd_t, thrd_t);
 #ifndef __cplusplus
 #define thrd_equal(A, B) ((A) == (B))
 #endif
-
-void call_once(once_flag *, void (*)(void));
 
 int mtx_init(mtx_t *, int);
 void mtx_destroy(mtx_t *);
