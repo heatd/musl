@@ -44,7 +44,7 @@ LIBCC = -lgcc
 CPPFLAGS =
 CFLAGS =
 CFLAGS_AUTO = -Os -pipe
-CFLAGS_C99FSE = -std=c99 -ffreestanding -nostdinc 
+CFLAGS_C99FSE = -std=c2x -ffreestanding -nostdinc 
 
 SYSROOT ?= $(shell $(CC) --print-sysroot)
 CFLAGS_ALL = $(CFLAGS_C99FSE)

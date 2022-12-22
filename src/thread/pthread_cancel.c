@@ -3,9 +3,7 @@
 #include "pthread_impl.h"
 #include "syscall.h"
 
-hidden long __cancel(), __syscall_cp_asm(), __syscall_cp_c();
-
-long __cancel()
+long __cancel(void)
 {
 	pthread_t self = __pthread_self();
 	if (self->canceldisable == PTHREAD_CANCEL_ENABLE || self->cancelasync)
