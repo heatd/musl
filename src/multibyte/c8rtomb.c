@@ -1,5 +1,3 @@
-#undef __STDC_VERSION__
-#define __STDC_VERSION__ 202311L
 #include <uchar.h>
 #include <errno.h>
 #include <wchar.h>

@@ -1,5 +1,3 @@
-#undef __STDC_VERSION__
-#define __STDC_VERSION__ 202311L
 #include <time.h>
 
 /* TIME_UTC, TIME_MONOTONIC, etc are all defined as being greater than 0 by the spec,
