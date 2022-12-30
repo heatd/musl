@@ -17,6 +17,37 @@ weak_alias(dummy1, __init_ssp);
 
 #define AUX_CNT 38
 
+#ifdef __x86_64__
+
+#define __cpuid(__leaf, __eax, __ebx, __ecx, __edx) \
+    __asm("  xchgq  %%rbx,%q1\n" \
+          "  cpuid\n" \
+          "  xchgq  %%rbx,%q1" \
+        : "=a"(__eax), "=r" (__ebx), "=c"(__ecx), "=d"(__edx) \
+        : "0"(__leaf))
+
+#define __cpuid_count(__leaf, __count, __eax, __ebx, __ecx, __edx) \
+    __asm("  xchgq  %%rbx,%q1\n" \
+          "  cpuid\n" \
+          "  xchgq  %%rbx,%q1" \
+        : "=a"(__eax), "=r" (__ebx), "=c"(__ecx), "=d"(__edx) \
+        : "0"(__leaf), "2"(__count))
+
+extern unsigned int __has_avx;
+
+void __init_x86_string(void)
+{
+	uint32_t eax = 0;
+    uint32_t ebx = 0;
+    uint32_t ecx = 0;
+    uint32_t edx = 0;
+	eax = 0x7;
+    __cpuid_count(0x7, 0, eax, ebx, ecx, edx);
+	__has_avx = ebx & (1 << 5);
+}
+
+#endif
+
 #ifdef __GNUC__
 __attribute__((__noinline__))
 #endif
@@ -38,6 +69,10 @@ void __init_libc(char **envp, char *pn)
 
 	__init_tls(aux);
 	__init_ssp((void *)aux[AT_RANDOM]);
+
+#ifdef __x86_64__
+	__init_x86_string();
+#endif
 
 	if (aux[AT_UID]==aux[AT_EUID] && aux[AT_GID]==aux[AT_EGID]
 		&& !aux[AT_SECURE]) return;
