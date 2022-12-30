@@ -74,6 +74,11 @@ name:		\
 # define ALIGN(n)	.p2align n
 #endif
 
+.section .data
+.align 16
+.global __has_avx
+__has_avx: .long 0
+
 	.section .text.avx2,"ax",@progbits
 
 /* 
@@ -88,6 +93,12 @@ END(__memset_chk_avx2)
 */
 
 ENTRY(memset_avx2)
+#ifndef ASSUME_AVX2
+	movq	__has_avx@GOTPCREL(%rip), %rax
+	movl	(%rax), %eax
+	cmp $0, %eax
+	je memset_sse2
+#endif
 	movq	%rdi, %rax
 	and	$0xff, %rsi
 	mov	$0x0101010101010101, %rcx
@@ -198,3 +209,104 @@ L(256bytesmore_nt):
 END(memset_avx2)
 
 ALIAS_SYMBOL(memset, memset_avx2)
+
+#undef L
+# define L(label)	.Lsse2##label
+
+ENTRY(memset_sse2)
+	movq	%rdi, %rax
+	and	$0xff, %rsi
+	mov	$0x0101010101010101, %rcx
+	imul	%rsi, %rcx
+	cmpq	$16, %rdx
+	jae	L(16bytesormore)
+	testb	$8, %dl
+	jnz	L(8_15bytes)
+	testb	$4, %dl
+	jnz	L(4_7bytes)
+	testb	$2, %dl
+	jnz	L(2_3bytes)
+	testb	$1, %dl
+	jz	L(return)
+	movb	%cl, (%rdi)
+L(return):
+	ret
+
+L(8_15bytes):
+	movq	%rcx, (%rdi)
+	movq	%rcx, -8(%rdi, %rdx)
+	ret
+
+L(4_7bytes):
+	movl	%ecx, (%rdi)
+	movl	%ecx, -4(%rdi, %rdx)
+	ret
+
+L(2_3bytes):
+	movw	%cx, (%rdi)
+	movw	%cx, -2(%rdi, %rdx)
+	ret
+
+	ALIGN (4)
+L(16bytesormore):
+	movd	%rcx, %xmm0
+	pshufd	$0, %xmm0, %xmm0
+	movdqu	%xmm0, (%rdi)
+	movdqu	%xmm0, -16(%rdi, %rdx)
+	cmpq	$32, %rdx
+	jbe	L(32bytesless)
+	movdqu	%xmm0, 16(%rdi)
+	movdqu	%xmm0, -32(%rdi, %rdx)
+	cmpq	$64, %rdx
+	jbe	L(64bytesless)
+	movdqu	%xmm0, 32(%rdi)
+	movdqu	%xmm0, 48(%rdi)
+	movdqu	%xmm0, -64(%rdi, %rdx)
+	movdqu	%xmm0, -48(%rdi, %rdx)
+	cmpq	$128, %rdx
+	ja	L(128bytesmore)
+L(32bytesless):
+L(64bytesless):
+	ret
+
+	ALIGN (4)
+L(128bytesmore):
+	leaq	64(%rdi), %rcx
+	andq	$-64, %rcx
+	movq	%rdx, %r8
+	addq	%rdi, %rdx
+	andq	$-64, %rdx
+	cmpq	%rcx, %rdx
+	je	L(return)
+
+#ifdef SHARED_CACHE_SIZE
+	cmp	$SHARED_CACHE_SIZE, %r8
+#else
+	cmp	__x86_64_shared_cache_size(%rip), %r8
+#endif
+	ja	L(128bytesmore_nt)
+
+	ALIGN (4)
+L(128bytesmore_normal):
+	movdqa	%xmm0, (%rcx)
+	movaps	%xmm0, 0x10(%rcx)
+	movaps	%xmm0, 0x20(%rcx)
+	movaps	%xmm0, 0x30(%rcx)
+	addq	$64, %rcx
+	cmpq	%rcx, %rdx
+	jne	L(128bytesmore_normal)
+	ret
+
+	ALIGN (4)
+L(128bytesmore_nt):
+	movntdq	%xmm0, (%rcx)
+	movntdq	%xmm0, 0x10(%rcx)
+	movntdq	%xmm0, 0x20(%rcx)
+	movntdq	%xmm0, 0x30(%rcx)
+	leaq	64(%rcx), %rcx
+	cmpq	%rcx, %rdx
+	jne	L(128bytesmore_nt)
+	sfence
+	ret
+
+END(memset_sse2)
