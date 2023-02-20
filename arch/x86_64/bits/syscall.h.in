@@ -148,6 +148,7 @@
 #define __NR_fstatfs			148
 #define __NR_sysinfo			149
 #define __NR_vfork              150
+#define __NR_pipe2				151
 #define __NR_capget				255
 #define __NR_capset				255
 #define __NR_utime				255
@@ -292,7 +293,6 @@
 #define __NR_signalfd4				289
 #define __NR_eventfd2				290
 #define __NR_epoll_create1			291
-#define __NR_pipe2					293
 #define __NR_inotify_init1			294
 #define __NR_perf_event_open		298
 #define __NR_fanotify_init			300
