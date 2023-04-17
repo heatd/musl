@@ -2,7 +2,7 @@
 #include "syscall.h"
 #include "libc.h"
 
-#include <onyx/public/cred.h>
+#include <uapi/cred.h>
 
 int seteuid(uid_t euid)
 {
