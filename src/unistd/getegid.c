@@ -1,6 +1,6 @@
 #include <unistd.h>
 #include "syscall.h"
-#include <onyx/public/cred.h>
+#include <uapi/cred.h>
 
 gid_t getegid(void)
 {

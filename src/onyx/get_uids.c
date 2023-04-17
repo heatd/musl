@@ -1,4 +1,5 @@
-#include <onyx/public/cred.h>
+#include <unistd.h>
+#include <uapi/cred.h>
 #include "syscall.h"
 
 int onx_get_uids(uid_t *ruid, uid_t *euid, uid_t *suid)

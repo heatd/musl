@@ -1,4 +1,6 @@
-#include <onyx/public/cred.h>
+#include <unistd.h>
+
+#include <uapi/cred.h>
 #include "syscall.h"
 
 int onx_set_gids(unsigned int flags, gid_t rgid, gid_t egid, gid_t sgid)

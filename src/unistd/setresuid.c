@@ -3,7 +3,7 @@
 #include "syscall.h"
 #include "libc.h"
 
-#include <onyx/public/cred.h>
+#include <uapi/cred.h>
 
 int setresuid(uid_t ruid, uid_t euid, uid_t suid)
 {

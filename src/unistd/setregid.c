@@ -2,7 +2,7 @@
 #include "syscall.h"
 #include "libc.h"
 
-#include <onyx/public/cred.h>
+#include <uapi/cred.h>
 
 int setregid(gid_t rgid, gid_t egid)
 {

@@ -1,7 +1,7 @@
 #include <unistd.h>
 #include "syscall.h"
 
-#include <onyx/public/cred.h>
+#include <uapi/cred.h>
 
 uid_t geteuid(void)
 {

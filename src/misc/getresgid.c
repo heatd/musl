@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include "syscall.h"
 
-#include <onyx/public/cred.h>
+#include <uapi/cred.h>
 
 int getresgid(gid_t *rgid, gid_t *egid, gid_t *sgid)
 {
