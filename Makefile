@@ -87,6 +87,10 @@ all:
 
 else
 
+ifeq ($(ARCH), aarch64)
+LDSO_PATHNAME = $(syslibdir)/ld-onyx-arm64.so
+endif
+
 all: $(ALL_LIBS) $(ALL_TOOLS)
 
 OBJ_DIRS = $(sort $(patsubst %/,%,$(dir $(ALL_LIBS) $(ALL_TOOLS) $(ALL_OBJS) $(GENH) $(GENH_INT))) obj/include)
