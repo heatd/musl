@@ -33,6 +33,7 @@
 #define __NR_setuid    33
 #define __NR_setgid    34
 #define __NR_mremap    36
+#define __NR_sigreturn 37
 #define __NR_insmod    38
 #define __NR_uname    39
 #define __NR_sethostname    41
