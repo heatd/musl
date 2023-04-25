@@ -166,11 +166,11 @@
 #define __NR_sched_rr_get_interval	255
 #define __NR_mlock					255
 #define __NR_munlock				255
-#define __NR_mlockall				151
-#define __NR_munlockall				152
-#define __NR_vhangup				153
-#define __NR_modify_ldt				154
-#define __NR_pivot_root				155
+#define __NR_mlockall				255
+#define __NR_munlockall				255
+#define __NR_vhangup				255
+#define __NR_modify_ldt				255
+#define __NR_pivot_root				255
 #define __NR__sysctl				156
 #define __NR_prctl					157
 #define __NR_adjtimex				159
