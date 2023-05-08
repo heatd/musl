@@ -33,6 +33,7 @@ typedef struct {
 } Dl_info;
 int dladdr(const void *, Dl_info *);
 int dlinfo(void *, int, void *);
+void *fdlopen(int, int);
 #endif
 
 #if _REDIR_TIME64
