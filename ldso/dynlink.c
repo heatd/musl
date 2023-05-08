@@ -988,16 +988,118 @@ static void makefuncdescs(struct dso *p)
 	}
 }
 
+static struct dso *load_library(const char *name, struct dso *needed_by);
+
+static struct dso *load_library_core(int fd, struct dso *needed_by, const char *pathname, const char *name)
+{
+	struct dso *p;
+	struct stat st;
+	size_t alloc_size;
+	int n_th = 0;
+	unsigned char *map;
+	struct dso temp_dso = {0};
+
+	if (fd < 0) return 0;
+	if (fstat(fd, &st) < 0) {
+		close(fd);
+		return 0;
+	}
+	for (p=head->next; p; p=p->next) {
+		if (p->dev == st.st_dev && p->ino == st.st_ino) {
+			/* If this library was previously loaded with a
+			 * pathname but a search found the same inode,
+			 * setup its shortname so it can be found by name. */
+			if (!p->shortname && pathname != name)
+				p->shortname = strrchr(p->name, '/')+1;
+			close(fd);
+			return p;
+		}
+	}
+	map = noload ? 0 : map_library(fd, &temp_dso);
+	close(fd);
+	if (!map) return 0;
+
+	/* Avoid the danger of getting two versions of libc mapped into the
+	 * same process when an absolute pathname was used. The symbols
+	 * checked are chosen to catch both musl and glibc, and to avoid
+	 * false positives from interposition-hack libraries. */
+	decode_dyn(&temp_dso);
+	if (find_sym(&temp_dso, "__libc_start_main", 1).sym &&
+	    find_sym(&temp_dso, "stdin", 1).sym) {
+		unmap_library(&temp_dso);
+		return load_library("libc.so", needed_by);
+	}
+	/* Past this point, if we haven't reached runtime yet, ldso has
+	 * committed either to use the mapped library or to abort execution.
+	 * Unmapping is not possible, so we can safely reclaim gaps. */
+	if (!runtime) reclaim_gaps(&temp_dso);
+
+	/* Allocate storage for the new DSO. When there is TLS, this
+	 * storage must include a reservation for all pre-existing
+	 * threads to obtain copies of both the new TLS, and an
+	 * extended DTV capable of storing an additional slot for
+	 * the newly-loaded DSO. */
+	alloc_size = sizeof *p + strlen(pathname) + 1;
+	if (runtime && temp_dso.tls.image) {
+		size_t per_th = temp_dso.tls.size + temp_dso.tls.align
+			+ sizeof(void *) * (tls_cnt+3);
+		n_th = libc.threads_minus_1 + 1;
+		if (n_th > SSIZE_MAX / per_th) alloc_size = SIZE_MAX;
+		else alloc_size += n_th * per_th;
+	}
+	p = calloc(1, alloc_size);
+	if (!p) {
+		unmap_library(&temp_dso);
+		return 0;
+	}
+	memcpy(p, &temp_dso, sizeof temp_dso);
+	p->dev = st.st_dev;
+	p->ino = st.st_ino;
+	p->needed_by = needed_by;
+	p->name = p->buf;
+	p->runtime_loaded = runtime;
+	strcpy(p->name, pathname);
+	/* Add a shortname only if name arg was not an explicit pathname. */
+	if (pathname != name) p->shortname = strrchr(p->name, '/')+1;
+	if (p->tls.image) {
+		p->tls_id = ++tls_cnt;
+		tls_align = MAXP2(tls_align, p->tls.align);
+#ifdef TLS_ABOVE_TP
+		p->tls.offset = tls_offset + ( (p->tls.align-1) &
+			(-tls_offset + (uintptr_t)p->tls.image) );
+		tls_offset = p->tls.offset + p->tls.size;
+#else
+		tls_offset += p->tls.size + p->tls.align - 1;
+		tls_offset -= (tls_offset + (uintptr_t)p->tls.image)
+			& (p->tls.align-1);
+		p->tls.offset = tls_offset;
+#endif
+		p->new_dtv = (void *)(-sizeof(size_t) &
+			(uintptr_t)(p->name+strlen(p->name)+sizeof(size_t)));
+		p->new_tls = (void *)(p->new_dtv + n_th*(tls_cnt+1));
+		if (tls_tail) tls_tail->next = &p->tls;
+		else libc.tls_head = &p->tls;
+		tls_tail = &p->tls;
+	}
+
+	tail->next = p;
+	p->prev = tail;
+	tail = p;
+
+	if (DL_FDPIC) makefuncdescs(p);
+
+	if (ldd_mode) dprintf(1, "\t%s => %s (%p)\n", name, pathname, p->base);
+
+	return p;
+}
+
 static struct dso *load_library(const char *name, struct dso *needed_by)
 {
 	char buf[2*NAME_MAX+2];
 	const char *pathname;
-	unsigned char *map;
-	struct dso *p, temp_dso = {0};
+	struct dso *p;
 	int fd;
 	struct stat st;
-	size_t alloc_size;
-	int n_th = 0;
 	int is_self = 0;
 
 	if (!*name) {
@@ -1100,98 +1202,8 @@ static struct dso *load_library(const char *name, struct dso *needed_by)
 		}
 		pathname = buf;
 	}
-	if (fd < 0) return 0;
-	if (fstat(fd, &st) < 0) {
-		close(fd);
-		return 0;
-	}
-	for (p=head->next; p; p=p->next) {
-		if (p->dev == st.st_dev && p->ino == st.st_ino) {
-			/* If this library was previously loaded with a
-			 * pathname but a search found the same inode,
-			 * setup its shortname so it can be found by name. */
-			if (!p->shortname && pathname != name)
-				p->shortname = strrchr(p->name, '/')+1;
-			close(fd);
-			return p;
-		}
-	}
-	map = noload ? 0 : map_library(fd, &temp_dso);
-	close(fd);
-	if (!map) return 0;
 
-	/* Avoid the danger of getting two versions of libc mapped into the
-	 * same process when an absolute pathname was used. The symbols
-	 * checked are chosen to catch both musl and glibc, and to avoid
-	 * false positives from interposition-hack libraries. */
-	decode_dyn(&temp_dso);
-	if (find_sym(&temp_dso, "__libc_start_main", 1).sym &&
-	    find_sym(&temp_dso, "stdin", 1).sym) {
-		unmap_library(&temp_dso);
-		return load_library("libc.so", needed_by);
-	}
-	/* Past this point, if we haven't reached runtime yet, ldso has
-	 * committed either to use the mapped library or to abort execution.
-	 * Unmapping is not possible, so we can safely reclaim gaps. */
-	if (!runtime) reclaim_gaps(&temp_dso);
-
-	/* Allocate storage for the new DSO. When there is TLS, this
-	 * storage must include a reservation for all pre-existing
-	 * threads to obtain copies of both the new TLS, and an
-	 * extended DTV capable of storing an additional slot for
-	 * the newly-loaded DSO. */
-	alloc_size = sizeof *p + strlen(pathname) + 1;
-	if (runtime && temp_dso.tls.image) {
-		size_t per_th = temp_dso.tls.size + temp_dso.tls.align
-			+ sizeof(void *) * (tls_cnt+3);
-		n_th = libc.threads_minus_1 + 1;
-		if (n_th > SSIZE_MAX / per_th) alloc_size = SIZE_MAX;
-		else alloc_size += n_th * per_th;
-	}
-	p = calloc(1, alloc_size);
-	if (!p) {
-		unmap_library(&temp_dso);
-		return 0;
-	}
-	memcpy(p, &temp_dso, sizeof temp_dso);
-	p->dev = st.st_dev;
-	p->ino = st.st_ino;
-	p->needed_by = needed_by;
-	p->name = p->buf;
-	p->runtime_loaded = runtime;
-	strcpy(p->name, pathname);
-	/* Add a shortname only if name arg was not an explicit pathname. */
-	if (pathname != name) p->shortname = strrchr(p->name, '/')+1;
-	if (p->tls.image) {
-		p->tls_id = ++tls_cnt;
-		tls_align = MAXP2(tls_align, p->tls.align);
-#ifdef TLS_ABOVE_TP
-		p->tls.offset = tls_offset + ( (p->tls.align-1) &
-			(-tls_offset + (uintptr_t)p->tls.image) );
-		tls_offset = p->tls.offset + p->tls.size;
-#else
-		tls_offset += p->tls.size + p->tls.align - 1;
-		tls_offset -= (tls_offset + (uintptr_t)p->tls.image)
-			& (p->tls.align-1);
-		p->tls.offset = tls_offset;
-#endif
-		p->new_dtv = (void *)(-sizeof(size_t) &
-			(uintptr_t)(p->name+strlen(p->name)+sizeof(size_t)));
-		p->new_tls = (void *)(p->new_dtv + n_th*(tls_cnt+1));
-		if (tls_tail) tls_tail->next = &p->tls;
-		else libc.tls_head = &p->tls;
-		tls_tail = &p->tls;
-	}
-
-	tail->next = p;
-	p->prev = tail;
-	tail = p;
-
-	if (DL_FDPIC) makefuncdescs(p);
-
-	if (ldd_mode) dprintf(1, "\t%s => %s (%p)\n", name, pathname, p->base);
-
-	return p;
+	return load_library_core(fd, needed_by, pathname, name);
 }
 
 static void load_direct_deps(struct dso *p)
