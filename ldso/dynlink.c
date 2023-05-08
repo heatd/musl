@@ -2040,7 +2040,7 @@ static void prepare_lazy(struct dso *p)
 	lazy_head = p;
 }
 
-void *dlopen(const char *file, int mode)
+static void *dlopen_internal(int fd, const char *file, int mode)
 {
 	struct dso *volatile p, *orig_tail, *orig_syms_tail, *orig_lazy_head, *next;
 	struct tls_module *orig_tls_tail;
@@ -2049,8 +2049,6 @@ void *dlopen(const char *file, int mode)
 	int cs;
 	jmp_buf jb;
 	struct dso **volatile ctor_queue = 0;
-
-	if (!file) return head;
 
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 	pthread_rwlock_wrlock(&lock);
@@ -2104,7 +2102,32 @@ void *dlopen(const char *file, int mode)
 		tail->next = 0;
 		p = 0;
 		goto end;
-	} else p = load_library(file, head);
+	} else {
+		if (fd != -1) {
+			/* We were called from fdlopen. First, we must dup the fd (as FreeBSD does). */
+			fd = fcntl(fd, F_DUPFD_CLOEXEC, 0);
+			if (fd < 0) {
+				error("Failed to duplicate file descriptor: %m");
+				goto end;
+			}
+
+			/* Now try to figure out the path using procfs. If we fail, use a fallback. */
+			char path[PATH_MAX + 1];
+			const char *pathname = path;
+
+			__procfdname(path, fd);
+			ssize_t st = readlink(path, path, PATH_MAX);
+			if (st < 0) {
+				pathname = "<anon_fdlopen>";
+			} else {
+				path[st] = '\0';
+			}
+
+			p = load_library_core(fd, head, pathname, pathname);
+		} else {
+			p = load_library(file, head);
+		}
+	}
 
 	if (!p) {
 		error(noload ?
@@ -2165,6 +2188,18 @@ end:
 	}
 	pthread_setcancelstate(cs, 0);
 	return p;
+}
+
+void *fdlopen(int fd, int mode)
+{
+	if (fd == -1) return head;
+	return dlopen_internal(fd, 0, mode);
+}
+
+void *dlopen(const char *file, int mode)
+{
+	if (!file) return head;
+	return dlopen_internal(-1, file, mode);
 }
 
 hidden int __dl_invalid_handle(void *h)
