@@ -537,6 +537,10 @@ tryflag CFLAGS_AUTO -Werror=discarded-array-qualifiers
 #
 test "$cc_family" = clang && tryflag CFLAGS_AUTO -Qunused-arguments
 
+# ld.gold mislinks musl by generating PLT entries for (almost?) every symbol in libc.so,
+# ignoring dynamic.list. Force ld.bfd. TODO: Look at it? Fix it upstream?
+test "$cc_family" = gcc && tryldflag LDFLAGS -fuse-ld=bfd
+
 if test "x$warnings" = xyes ; then
 tryflag CFLAGS_AUTO -Waddress
 tryflag CFLAGS_AUTO -Warray-bounds
