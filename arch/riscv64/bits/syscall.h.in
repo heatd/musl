@@ -145,6 +145,7 @@
 #define __NR_sysinfo			149
 #define __NR_vfork              150
 #define __NR_pipe2				151
+#define __NR_socketpair			152
 #define __NR_capget				255
 #define __NR_capset				255
 #define __NR_utime				255
@@ -268,7 +269,6 @@
 #define __NR_shmctl				255
 #define __NR_shmdt				255
 #define __NR_shmget				255
-#define __NR_socketpair				255
 #define __NR_flock				255
 #define __NR_fdatasync				255
 #define __NR_migrate_pages			256
