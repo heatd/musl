@@ -146,6 +146,7 @@
 #define __NR_vfork              150
 #define __NR_pipe2				151
 #define __NR_socketpair			152
+#define __NR_mpagemap           153
 #define __NR_capget				255
 #define __NR_capset				255
 #define __NR_utime				255
@@ -156,7 +157,7 @@
 #define __NR_setpriority			255
 #define __NR_sched_setparam			255
 #define __NR_sched_getparam			255
-#define __NR_sched_setscheduler		144
+#define __NR_sched_setscheduler		255
 #define __NR_sched_getscheduler		255
 #define __NR_sched_get_priority_max	255
 #define __NR_sched_get_priority_min	255
