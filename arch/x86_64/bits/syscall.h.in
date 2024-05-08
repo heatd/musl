@@ -151,6 +151,7 @@
 #define __NR_pipe2				151
 #define __NR_socketpair			152
 #define __NR_mpagemap           153
+#define __NR_chroot             154
 #define __NR_capget				255
 #define __NR_capset				255
 #define __NR_utime				255
@@ -176,7 +177,6 @@
 #define __NR__sysctl				156
 #define __NR_prctl					157
 #define __NR_adjtimex				159
-#define __NR_chroot					161
 #define __NR_acct					163
 #define __NR_settimeofday			164
 #define __NR_umount2				166
