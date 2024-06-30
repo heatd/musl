@@ -170,11 +170,10 @@
 #define __NR_munlockall				255
 #define __NR_vhangup				255
 #define __NR_modify_ldt				255
-#define __NR_pivot_root				155
-#define __NR__sysctl				156
-#define __NR_prctl					157
-#define __NR_adjtimex				159
-#define __NR_chroot					161
+#define __NR_pivot_root				256
+#define __NR__sysctl				257
+#define __NR_prctl					258
+#define __NR_adjtimex				259
 #define __NR_acct					163
 #define __NR_settimeofday			164
 #define __NR_umount2				166
