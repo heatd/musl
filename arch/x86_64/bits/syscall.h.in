@@ -154,6 +154,8 @@
 #define __NR_chroot             154
 #define __NR_flock				155
 #define __NR_umount2			156
+#define __NR_swapon				157
+#define __NR_swapoff			158
 #define __NR_capget				255
 #define __NR_capset				255
 #define __NR_utime				255
@@ -181,8 +183,6 @@
 #define __NR_adjtimex				259
 #define __NR_acct					163
 #define __NR_settimeofday			164
-#define __NR_swapon					167
-#define __NR_swapoff				168
 #define __NR_setdomainname			171
 #define __NR_iopl					172
 #define __NR_ioperm					173
