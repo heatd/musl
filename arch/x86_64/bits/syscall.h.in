@@ -156,6 +156,7 @@
 #define __NR_umount2			156
 #define __NR_swapon				157
 #define __NR_swapoff			158
+#define __NR_fdatasync			159
 #define __NR_capget				255
 #define __NR_capset				255
 #define __NR_utime				255
@@ -275,7 +276,6 @@
 #define __NR_shmctl				255
 #define __NR_shmdt				255
 #define __NR_shmget				255
-#define __NR_fdatasync				255
 #define __NR_migrate_pages			256
 #define __NR_unshare				272
 #define __NR_set_robust_list			273
