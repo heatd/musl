@@ -153,6 +153,7 @@
 #define __NR_swapon				157
 #define __NR_swapoff			158
 #define __NR_fdatasync			159
+#define __NR_madvise				160
 #define __NR_capget				255
 #define __NR_capset				255
 #define __NR_utime				255
