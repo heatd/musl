@@ -33,6 +33,63 @@ weak_alias(dummy1, __init_ssp);
         : "=a"(__eax), "=r" (__ebx), "=c"(__ecx), "=d"(__edx) \
         : "0"(__leaf), "2"(__count))
 
+static __inline int __get_cpuid_max (unsigned int __leaf, unsigned int *__sig)
+{
+    unsigned int __eax, __ebx, __ecx, __edx;
+#if __i386__
+    int __cpuid_supported;
+
+    __asm("  pushfl\n"
+          "  popl   %%eax\n"
+          "  movl   %%eax,%%ecx\n"
+          "  xorl   $0x00200000,%%eax\n"
+          "  pushl  %%eax\n"
+          "  popfl\n"
+          "  pushfl\n"
+          "  popl   %%eax\n"
+          "  movl   $0,%0\n"
+          "  cmpl   %%eax,%%ecx\n"
+          "  je     1f\n"
+          "  movl   $1,%0\n"
+          "1:"
+        : "=r" (__cpuid_supported) : : "eax", "ecx");
+    if (!__cpuid_supported)
+        return 0;
+#endif
+
+    __cpuid(__leaf, __eax, __ebx, __ecx, __edx);
+    if (__sig)
+        *__sig = __ebx;
+    return __eax;
+}
+
+static __inline int __get_cpuid (unsigned int __leaf, unsigned int *__eax,
+                                 unsigned int *__ebx, unsigned int *__ecx,
+                                 unsigned int *__edx)
+{
+    unsigned int __max_leaf = __get_cpuid_max(__leaf & 0x80000000, 0);
+
+    if (__max_leaf == 0 || __max_leaf < __leaf)
+        return 0;
+
+    __cpuid(__leaf, *__eax, *__ebx, *__ecx, *__edx);
+    return 1;
+}
+
+static __inline int __get_cpuid_count (unsigned int __leaf,
+                                       unsigned int __subleaf,
+                                       unsigned int *__eax, unsigned int *__ebx,
+                                       unsigned int *__ecx, unsigned int *__edx)
+{
+    unsigned int __max_leaf = __get_cpuid_max(__leaf & 0x80000000, 0);
+
+    if (__max_leaf == 0 || __max_leaf < __leaf)
+        return 0;
+
+    __cpuid_count(__leaf, __subleaf, *__eax, *__ebx, *__ecx, *__edx);
+    return 1;
+}
+
 extern unsigned int __has_avx;
 
 void __init_x86_string(void)
@@ -42,7 +99,8 @@ void __init_x86_string(void)
     uint32_t ecx = 0;
     uint32_t edx = 0;
 	eax = 0x7;
-    __cpuid_count(0x7, 0, eax, ebx, ecx, edx);
+    if (!__get_cpuid_count(0x7, 0, &eax, &ebx, &ecx, &edx))
+		return;
 	__has_avx = ebx & (1 << 5);
 }
 
