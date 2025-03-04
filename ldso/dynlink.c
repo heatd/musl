@@ -1979,7 +1979,7 @@ void __dls3(size_t *sp, size_t *auxv)
 				vdso.base = (void *)(vdso_base - phdr->p_vaddr + phdr->p_offset);
 		}
 		vdso.name = "";
-		vdso.shortname = "linux-gate.so.1";
+		vdso.shortname = "onyx-vdso.so.0";
 		vdso.relocated = 1;
 		vdso.deps = (struct dso **)no_deps;
 		decode_dyn(&vdso);
