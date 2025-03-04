@@ -190,14 +190,25 @@ int posix_spawn(pid_t *restrict res, const char *restrict path,
 		goto fail;
 	}
 
-	pid = __clone(child, stack+sizeof stack,
-		CLONE_VM|CLONE_VFORK|SIGCHLD, &args);
-	close(args.p[1]);
+	// TODO: vfork() here doesn't work and corrupts the stack.
+	// We need a linux-like clone(2) that we can use to spawn
+	// processes that share stuff with us, with a given stack and
+	// instruction pointer. Take the invocation from upstream musl
+	// when we add that.
+	pid = fork();
+	
+	// Close this end of the pipe when we're not the child
+	if (pid != 0) {
+		close(args.p[1]);
+	}
+
 	UNLOCK(__abort_lock);
 
 	if (pid > 0) {
 		if (read(args.p[0], &ec, sizeof ec) != sizeof ec) ec = 0;
 		else waitpid(pid, &(int){0}, 0);
+	} else if (pid == 0) {
+		child(&args);
 	} else {
 		ec = -pid;
 	}
