@@ -537,6 +537,9 @@ tryflag CFLAGS_AUTO -Werror=discarded-array-qualifiers
 #
 test "$cc_family" = clang && tryflag CFLAGS_AUTO -Qunused-arguments
 
+# LLD cant do relaxation, so disable it if we're clang
+test "$cc_family" = clang && tryflag CFLAGS -mno-relax
+
 if test "x$warnings" = xyes ; then
 tryflag CFLAGS_AUTO -Waddress
 tryflag CFLAGS_AUTO -Warray-bounds
@@ -693,7 +696,7 @@ trycppif _SOFT_FLOAT "$t" && fail "$0: error: soft-float not supported on powerp
 fi
 
 if test "$ARCH" = "riscv64" ; then
-trycppif __riscv_float_abi_soft "$t" && SUBARCH=${SUBARCH}-sf
+trycppif __riscv_float_abi_soft "$t" && SUBARCH=${SUBARCH}-sf && libdir="$libdir/lp64" && libc_so_prefix="lp64/"
 trycppif __riscv_float_abi_single "$t" && SUBARCH=${SUBARCH}-sp
 fi
 
@@ -799,6 +802,7 @@ ALL_TOOLS = $tools
 TOOL_LIBS = $tool_libs
 ADD_CFI = $ADD_CFI
 MALLOC_DIR = $malloc_dir
+libc_so_prefix = $libc_so_prefix
 EOF
 test "x$static" = xno && echo "STATIC_LIBS ="
 test "x$shared" = xno && echo "SHARED_LIBS ="
