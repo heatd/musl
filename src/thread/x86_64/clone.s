@@ -4,7 +4,7 @@
 .type   __clone,@function
 __clone:
 	xor %eax,%eax
-	mov $56,%al
+	mov $165,%al
 	mov %rdi,%r11
 	mov %rdx,%rdi
 	mov %r8,%rdx
@@ -22,7 +22,7 @@ __clone:
 	call *%r9
 	mov %eax,%edi
 	xor %eax,%eax
-	mov $60,%al
+	mov $64,%al
 	syscall
 	hlt
 1:	ret
