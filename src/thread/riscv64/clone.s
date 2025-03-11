@@ -17,7 +17,7 @@ __clone:
 	mv a2, a4
 	mv a3, a5
 	mv a4, a6
-	li a7, 220 # SYS_clone
+	li a7, 165 # SYS_clone
 	ecall
 
 	beqz a0, 1f
@@ -30,5 +30,5 @@ __clone:
 	jalr a1
 
 	# Exit
-	li a7, 93 # SYS_exit
+	li a7, 64 # SYS_exit
 	ecall
