@@ -149,6 +149,14 @@
 #define __NR_socketpair			152
 #define __NR_mpagemap           153
 #define __NR_chroot             154
+#define __NR_getresuid          166
+#define __NR_getresgid          167
+#define __NR_setresuid          168
+#define __NR_setresgid          169
+#define __NR_setreuid           170
+#define __NR_setregid           171
+#define __NR_geteuid            172
+#define __NR_getegid            173
 #define __NR_capget				255
 #define __NR_capset				255
 #define __NR_utime				255

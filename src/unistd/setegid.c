@@ -2,9 +2,7 @@
 #include "libc.h"
 #include "syscall.h"
 
-#include <uapi/cred.h>
-
 int setegid(gid_t egid)
 {
-	return onx_set_gids(SET_GIDS_EGID_VALID, -1, egid, -1);
+	return __setxid(SYS_setresgid, -1, egid, -1);
 }

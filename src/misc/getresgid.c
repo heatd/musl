@@ -2,9 +2,7 @@
 #include <unistd.h>
 #include "syscall.h"
 
-#include <uapi/cred.h>
-
 int getresgid(gid_t *rgid, gid_t *egid, gid_t *sgid)
 {
-	return onx_get_gids(rgid, egid, sgid);
+	return syscall(SYS_getresgid, rgid, egid, sgid);
 }
