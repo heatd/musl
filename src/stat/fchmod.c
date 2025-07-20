@@ -14,6 +14,6 @@ int fchmod(int fd, mode_t mode)
 #ifdef SYS_chmod
 	return syscall(SYS_chmod, buf, mode);
 #else
-	return syscall(SYS_fchmodat, AT_FDCWD, buf, mode);
+	return syscall(SYS_fchmodat, AT_FDCWD, buf, mode, 0);
 #endif
 }
