@@ -170,6 +170,8 @@
 #define __NR_setregid           171
 #define __NR_geteuid            172
 #define __NR_getegid            173
+#define __NR_eventfd			174
+#define __NR_eventfd2			175
 #define __NR_capget				255
 #define __NR_capset				255
 #define __NR_utime				255
@@ -295,11 +297,9 @@
 #define __NR_epoll_pwait			281
 #define __NR_signalfd				282
 #define __NR_timerfd_create			283
-#define __NR_eventfd				284
 #define __NR_timerfd_settime		286
 #define __NR_timerfd_gettime		287
 #define __NR_signalfd4				289
-#define __NR_eventfd2				290
 #define __NR_epoll_create1			291
 #define __NR_inotify_init1			294
 #define __NR_perf_event_open		298
