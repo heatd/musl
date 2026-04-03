@@ -56,7 +56,7 @@
 #define __NR_openat    60
 #define __NR_fstatat    61
 #define __NR_fmount    62
-#define __NR_clone				63
+#define __NR_clone				165
 #define __NR_exit_thread    64
 #define __NR_rt_sigprocmask    65
 #define __NR_rt_sigsuspend    66
@@ -168,6 +168,10 @@
 #define __NR_getegid            173
 #define __NR_eventfd			174
 #define __NR_eventfd2			175
+#define __NR_mlock				176
+#define __NR_munlock		    177
+#define __NR_mlockall			178
+#define __NR_munlockall			179
 #define __NR_capget				255
 #define __NR_capset				255
 #define __NR_utime				255
@@ -183,10 +187,6 @@
 #define __NR_sched_get_priority_max	255
 #define __NR_sched_get_priority_min	255
 #define __NR_sched_rr_get_interval	255
-#define __NR_mlock					255
-#define __NR_munlock				255
-#define __NR_mlockall				255
-#define __NR_munlockall				255
 #define __NR_vhangup				255
 #define __NR_modify_ldt				255
 #define __NR_pivot_root				256
