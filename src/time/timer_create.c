@@ -1,6 +1,7 @@
 #include <time.h>
 #include <setjmp.h>
 #include <limits.h>
+#include <stdio.h>
 #include <semaphore.h>
 #include "pthread_impl.h"
 #include "atomic.h"
@@ -45,10 +46,17 @@ static void *start(void *arg)
 	pthread_t self = __pthread_self();
 	struct start_args *args = arg;
 	jmp_buf jb;
+	int cs;
 
 	void (*notify)(union sigval) = args->sev->sigev_notify_function;
 	union sigval val = args->sev->sigev_value;
 
+	/* The parent thread can set self->cancel at any time, to signal
+	 * timer creation failed. However, it's not supposed to be a real
+	 * cancellation. Being "cancelled" here just means that the parent
+	 * thread may easily hang forever, as sem_wait() and sem_post() are
+	 * cancellation points. */
+	__pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 	/* The two-way semaphore synchronization ensures that we see
 	 * self->cancel set by the parent if timer creation failed or
 	 * self->timer_id if it succeeded, and informs the parent that
@@ -56,6 +64,7 @@ static void *start(void *arg)
 	 * proceed past their block lifetime. */
 	while (sem_wait(&args->sem1));
 	sem_post(&args->sem2);
+	__pthread_setcancelstate(cs, 0);
 
 	if (self->cancel)
 		return 0;
