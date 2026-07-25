@@ -17,7 +17,7 @@ __clone:
 	mov x2,x4
 	mov x3,x5
 	mov x4,x6
-	mov x8,#220 // SYS_clone
+	mov x8,#165 // SYS_clone
 	svc #0
 
 	cbz x0,1f
